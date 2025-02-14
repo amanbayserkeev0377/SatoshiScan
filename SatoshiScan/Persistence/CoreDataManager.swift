@@ -10,7 +10,6 @@ import UIKit
 
 class CoreDataManager {
     static let shared = CoreDataManager()
-    
     private let persistentContainer: NSPersistentContainer
     
     private init() {

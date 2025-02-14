@@ -37,13 +37,27 @@ class CryptoDetailViewController: UIViewController {
     private let chartView: LineChartView = {
         let chart = LineChartView()
         chart.translatesAutoresizingMaskIntoConstraints = false
+        chart.clipsToBounds = true
+        chart.isHidden = true
         return chart
     }()
     
     private let addToPortfolioButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("Add to Portfolio", for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
+        var config = UIButton.Configuration.filled()
+        config.title = "Add to Portfolio"
+        config.baseBackgroundColor = .red
+        config.baseForegroundColor = .white
+        config.cornerStyle = .medium
+        config.buttonSize = .large
+        
+        let button = UIButton(configuration: config)
+        button.layer.shadowColor = UIColor.black.cgColor
+        button.layer.shadowOffset = CGSize(width: 0, height: 2)
+        button.layer.shadowOpacity = 0.3
+        button.layer.shadowRadius = 4
+        button.layer.borderWidth = 2
+        button.layer.borderColor = UIColor.black.cgColor
+        
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -72,6 +86,9 @@ class CryptoDetailViewController: UIViewController {
         view.addSubview(nameLabel)
         view.addSubview(priceLabel)
         view.addSubview(chartView)
+        view.addSubview(addToPortfolioButton)
+        
+        addToPortfolioButton.isHidden = false
         
         NSLayoutConstraint.activate([
             coinImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
@@ -90,10 +107,10 @@ class CryptoDetailViewController: UIViewController {
             chartView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             chartView.heightAnchor.constraint(equalToConstant: 250),
             
-            addToPortfolioButton.topAnchor.constraint(equalTo: chartView.bottomAnchor, constant: 20),
+            addToPortfolioButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 400),
             addToPortfolioButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             addToPortfolioButton.heightAnchor.constraint(equalToConstant: 50),
-            addToPortfolioButton.widthAnchor.constraint(equalToConstant: 200)
+            addToPortfolioButton.widthAnchor.constraint(equalToConstant: 200),
         ])
     }
 
