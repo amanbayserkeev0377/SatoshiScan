@@ -30,6 +30,9 @@ class CryptoListViewController: UIViewController {
         view.backgroundColor = .systemBackground
         
         tableView.dataSource = self
+        tableView.delegate = self
+        tableView.rowHeight = 60
+        tableView.allowsSelection = true
         tableView.register(CryptoCell.self, forCellReuseIdentifier: CryptoCell.identifier)
         
         view.addSubview(tableView)
@@ -47,6 +50,16 @@ class CryptoListViewController: UIViewController {
             DispatchQueue.main.async {
                 self?.tableView.reloadData()
             }
+        }
+    }
+    
+    private func updateVisibleCells() {
+        guard let visibleRows = tableView.indexPathsForVisibleRows else { return }
+        
+        for indexPath in visibleRows {
+            guard let cell = tableView.cellForRow(at: indexPath) as? CryptoCell else { continue }
+            let coin = viewModel.coins[indexPath.row]
+            cell.updatePrice(newPrice: coin.current_price)
         }
     }
             
@@ -76,7 +89,6 @@ extension CryptoListViewController: UITableViewDataSource {
 extension CryptoListViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let selectedCoin = viewModel.coins[indexPath.row]
-        print("Selected coin: \(selectedCoin.name)")
         let detailVC = CryptoDetailViewController(coin: selectedCoin)
         navigationController?.pushViewController(detailVC, animated: true)
     }

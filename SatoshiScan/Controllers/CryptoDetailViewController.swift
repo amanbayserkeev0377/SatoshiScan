@@ -38,16 +38,15 @@ class CryptoDetailViewController: UIViewController {
         let chart = LineChartView()
         chart.translatesAutoresizingMaskIntoConstraints = false
         chart.clipsToBounds = true
-        chart.isHidden = true
         return chart
     }()
     
     private let addToPortfolioButton: UIButton = {
         var config = UIButton.Configuration.filled()
         config.title = "Add to Portfolio"
-        config.baseBackgroundColor = .red
+        config.baseBackgroundColor = .systemBlue
         config.baseForegroundColor = .white
-        config.cornerStyle = .medium
+        config.cornerStyle = .large
         config.buttonSize = .large
         
         let button = UIButton(configuration: config)
@@ -55,9 +54,6 @@ class CryptoDetailViewController: UIViewController {
         button.layer.shadowOffset = CGSize(width: 0, height: 2)
         button.layer.shadowOpacity = 0.3
         button.layer.shadowRadius = 4
-        button.layer.borderWidth = 2
-        button.layer.borderColor = UIColor.black.cgColor
-        
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -73,13 +69,10 @@ class CryptoDetailViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        print("CryptoDetailViewController loaded!")
         view.backgroundColor = .systemBackground
         setupUI()
         configureData()
         fetchChartData()
-        view.addSubview(addToPortfolioButton)
-
         
         addToPortfolioButton.addTarget(self, action: #selector(addToPortfolioTapped), for: .touchUpInside)
     }
@@ -90,12 +83,6 @@ class CryptoDetailViewController: UIViewController {
         view.addSubview(priceLabel)
         view.addSubview(chartView)
         view.addSubview(addToPortfolioButton)
-        print("✅ addToPortfolioButton added to view:", addToPortfolioButton.superview != nil ? "YES" : "NO")
-
-        
-        print("setupUI() called")
-        
-        addToPortfolioButton.isHidden = false
         
         NSLayoutConstraint.activate([
             coinImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
@@ -117,7 +104,7 @@ class CryptoDetailViewController: UIViewController {
             addToPortfolioButton.topAnchor.constraint(equalTo: chartView.bottomAnchor, constant: 20),
             addToPortfolioButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             addToPortfolioButton.heightAnchor.constraint(equalToConstant: 50),
-            addToPortfolioButton.widthAnchor.constraint(equalToConstant: 200),
+            addToPortfolioButton.widthAnchor.constraint(equalToConstant: 220),
         ])
     }
 

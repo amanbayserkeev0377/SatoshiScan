@@ -45,6 +45,11 @@ class CoreDataManager {
         saveContext()
     }
     
+    func removeFromPortfolio(coin: PortfolioCoin) {
+        context.delete(coin)
+        saveContext()
+    }
+    
     func fetchPortfolio() -> [PortfolioCoin] {
         let request: NSFetchRequest<PortfolioCoin> = PortfolioCoin.fetchRequest()
         do {

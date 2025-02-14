@@ -10,6 +10,7 @@ import Foundation
 class CryptoViewModel {
     var coins: [Crypto] = []
     var onDataUpdated: (() -> Void)?
+    private let webSocketManager = WebSocketManager()
     
     func fetchCryptoData() {
         CoinGeckoAPI.fetchCoins { [weak self] result in
@@ -18,9 +19,29 @@ class CryptoViewModel {
                 case .success(let coins):
                     self?.coins = coins
                     self?.onDataUpdated?()
+                    self?.startWebSocket()
                 case .failure(let error):
                     print("Error fetching data: \(error.localizedDescription)")
                 }
+            }
+        }
+    }
+    
+    private func startWebSocket() {
+        let symbols = coins.map { $0.symbol.uppercased() + "USDT" }
+        webSocketManager.delegate = self
+        webSocketManager.connect(symbols: symbols)
+    }
+}
+
+// MARK: - WebSocketManagerDelegate
+extension CryptoViewModel: WebSocketManagerDelegate {
+    func didReceivePriceUpdate(symbol: String, price: Double) {
+        if let index = coins.firstIndex(where: { "\($0.symbol.lowercased())usdt" == symbol.lowercased() }) {
+            coins[index].current_price = price
+            
+            DispatchQueue.main.async {
+                self.onDataUpdated?()
             }
         }
     }

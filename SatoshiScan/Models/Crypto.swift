@@ -11,6 +11,6 @@ struct Crypto: Decodable {
     let id: String
     let name: String
     let symbol: String
-    let current_price: Double
+    var current_price: Double
     let image: String
 }
