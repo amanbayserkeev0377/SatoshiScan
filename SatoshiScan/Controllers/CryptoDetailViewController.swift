@@ -73,10 +73,13 @@ class CryptoDetailViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        print("CryptoDetailViewController loaded!")
         view.backgroundColor = .systemBackground
         setupUI()
         configureData()
         fetchChartData()
+        view.addSubview(addToPortfolioButton)
+
         
         addToPortfolioButton.addTarget(self, action: #selector(addToPortfolioTapped), for: .touchUpInside)
     }
@@ -87,6 +90,10 @@ class CryptoDetailViewController: UIViewController {
         view.addSubview(priceLabel)
         view.addSubview(chartView)
         view.addSubview(addToPortfolioButton)
+        print("✅ addToPortfolioButton added to view:", addToPortfolioButton.superview != nil ? "YES" : "NO")
+
+        
+        print("setupUI() called")
         
         addToPortfolioButton.isHidden = false
         
@@ -107,7 +114,7 @@ class CryptoDetailViewController: UIViewController {
             chartView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             chartView.heightAnchor.constraint(equalToConstant: 250),
             
-            addToPortfolioButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 400),
+            addToPortfolioButton.topAnchor.constraint(equalTo: chartView.bottomAnchor, constant: 20),
             addToPortfolioButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             addToPortfolioButton.heightAnchor.constraint(equalToConstant: 50),
             addToPortfolioButton.widthAnchor.constraint(equalToConstant: 200),
