@@ -12,6 +12,9 @@ import DGCharts
 class CryptoDetailViewController: UIViewController {
     private let coin: Crypto
     
+    private let scrollView = UIScrollView()
+    private let contentView = UIView()
+    
     private let coinImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
@@ -34,10 +37,42 @@ class CryptoDetailViewController: UIViewController {
         return label
     }()
     
+    private let priceChangeLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let marketCapLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let volumeLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
     private let chartView: LineChartView = {
         let chart = LineChartView()
         chart.translatesAutoresizingMaskIntoConstraints = false
         chart.clipsToBounds = true
+        
+        chart.rightAxis.enabled = false
+        chart.leftAxis.drawGridLinesEnabled = false
+        chart.leftAxis.axisLineColor = .gray
+        chart.xAxis.labelPosition = .bottom
+        chart.xAxis.drawGridLinesEnabled = false
+        chart.legend.enabled = false
+        
+        chart.noDataText = "No chart data available"
+        chart.noDataTextColor = .gray
+        
         return chart
     }()
     
@@ -67,44 +102,72 @@ class CryptoDetailViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
 
+    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         setupUI()
         configureData()
-        fetchChartData()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.fetchChartData()
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.fetchCryptoDetail()
+        }
         
         addToPortfolioButton.addTarget(self, action: #selector(addToPortfolioTapped), for: .touchUpInside)
     }
     
     private func setupUI() {
-        view.addSubview(coinImageView)
-        view.addSubview(nameLabel)
-        view.addSubview(priceLabel)
-        view.addSubview(chartView)
-        view.addSubview(addToPortfolioButton)
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentView)
         
         NSLayoutConstraint.activate([
-            coinImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-            coinImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            coinImageView.widthAnchor.constraint(equalToConstant: 100),
-            coinImageView.heightAnchor.constraint(equalToConstant: 100),
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             
-            nameLabel.topAnchor.constraint(equalTo: coinImageView.bottomAnchor, constant: 16),
-            nameLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
+        ])
+        
+        let stackView = UIStackView(arrangedSubviews: [
+            coinImageView, nameLabel, priceLabel, chartView,
+            priceChangeLabel, marketCapLabel, volumeLabel
+        ])
+        stackView.axis = .vertical
+        stackView.spacing = 12
+        stackView.alignment = .fill
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        
+        chartView.heightAnchor.constraint(equalToConstant: 250).isActive = true
+        
+        contentView.addSubview(stackView)
+        contentView.addSubview(addToPortfolioButton)
+        
+        NSLayoutConstraint.activate([
+            stackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
+            stackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            stackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
-            priceLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 8),
-            priceLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            chartView.leadingAnchor.constraint(equalTo: stackView.leadingAnchor),
+            chartView.trailingAnchor.constraint(equalTo: stackView.trailingAnchor),
             
-            chartView.topAnchor.constraint(equalTo: priceLabel.bottomAnchor, constant: 20),
-            chartView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            chartView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            chartView.heightAnchor.constraint(equalToConstant: 250),
-            
-            addToPortfolioButton.topAnchor.constraint(equalTo: chartView.bottomAnchor, constant: 20),
-            addToPortfolioButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            addToPortfolioButton.topAnchor.constraint(equalTo: stackView.bottomAnchor, constant: 20),
+            addToPortfolioButton.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             addToPortfolioButton.heightAnchor.constraint(equalToConstant: 50),
-            addToPortfolioButton.widthAnchor.constraint(equalToConstant: 220),
+            addToPortfolioButton.widthAnchor.constraint(equalToConstant: 200),
+            
+            contentView.bottomAnchor.constraint(equalTo: addToPortfolioButton.bottomAnchor, constant: 20)
         ])
     }
 
@@ -119,6 +182,7 @@ class CryptoDetailViewController: UIViewController {
             DispatchQueue.main.async {
                 switch result {
                 case .success(let chartEntries):
+                    print("✅ Chart data received: \(chartEntries.count) points")
                     self?.updateChart(with: chartEntries)
                 case .failure(let error):
                     print("Error fetching chart data: \(error.localizedDescription)")
@@ -128,11 +192,37 @@ class CryptoDetailViewController: UIViewController {
     }
     
     private func updateChart(with entries: [ChartDataEntry]) {
-        let dataSet = LineChartDataSet(entries: entries, label: "Price History")
+        print("📊 Updating chart with \(entries.count) data points")
+        
+        guard !entries.isEmpty else {
+            print("No data for chart")
+            chartView.data = nil
+            return
+        }
+
+        let minX = entries.first?.x ?? 0
+        let normalizedEntries = entries.map { ChartDataEntry(x: $0.x - minX, y: $0.y) }
+        
+        let dataSet = LineChartDataSet(entries: normalizedEntries, label: "Price History")
         dataSet.colors = [.systemBlue]
-        dataSet.circleColors = [.systemBlue]
+        dataSet.lineWidth = 2.0
+        dataSet.drawCirclesEnabled = false
+        dataSet.mode = .cubicBezier
+        
+        let gradientColors = [UIColor.systemBlue.cgColor, UIColor.clear.cgColor] as CFArray
+        let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: gradientColors, locations: [0.5, 1.0])!
+        dataSet.fill = LinearGradientFill(gradient: gradient, angle: 90.0)
+        dataSet.drawFilledEnabled = true
+        dataSet.drawHorizontalHighlightIndicatorEnabled = false
+        
         let data = LineChartData(dataSet: dataSet)
+        data.setDrawValues(false)
+        
+        print("📉 Setting chart data: \(entries.count) points")
         chartView.data = data
+        chartView.notifyDataSetChanged()
+        chartView.setNeedsDisplay()
+        print("✅ Chart updated!")
     }
     
     @objc private func addToPortfolioTapped() {
@@ -140,5 +230,30 @@ class CryptoDetailViewController: UIViewController {
         let alert = UIAlertController(title: "Success", message: "\(coin.name) added to portfolio!", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
+    }
+    
+    private func fetchCryptoDetail() {
+        CoinGeckoAPI.fetchCryptoDetail(for: coin.id) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let detail):
+                    self?.updateDetailUI(with: detail)
+                case .failure(let error):
+                    print("Error fetching detail:", error.localizedDescription)
+                }
+            }
+        }
+    }
+    
+    private func updateDetailUI(with detail: CryptoDetail) {
+        let priceChange = detail.market_data.price_change_percentage_24h ?? 0.0
+        let marketCap = detail.market_data.market_cap?["usd"] ?? 0.0
+        let volume = detail.market_data.total_volume?["usd"] ?? 0.0
+        
+        priceChangeLabel.text = "24h Change: \(String(format: "%.2f", priceChange))%"
+        marketCapLabel.text = "Market Cap: $\(String(format: "%.0f", marketCap))"
+        volumeLabel.text = "24h Volume: $\(String(format: "%.0f", volume))"
+        
+        priceChangeLabel.textColor = priceChange >= 0 ? .systemGreen : .systemRed
     }
 }

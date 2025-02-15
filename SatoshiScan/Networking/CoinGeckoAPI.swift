@@ -57,3 +57,27 @@ struct CoinGeckoAPI {
     }
 }
 
+// MARK: - Fetch Crypto Detail
+extension CoinGeckoAPI {
+    static func fetchCryptoDetail(for coinID: String, completion: @escaping (Result<CryptoDetail, Error>) -> Void) {
+        let url = "\(baseURL)/coins/\(coinID)?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false"
+        
+        AF.request(url).responseDecodable(of: CryptoDetail.self) { response in
+            if let statusCode = response.response?.statusCode, statusCode == 429 {
+                print("API Rate Limit Exceeded. Waiting before retrying...")
+                DispatchQueue.global().asyncAfter(deadline: .now() + 10) {
+                    fetchCryptoDetail(for: coinID, completion: completion)
+                }
+                return
+            }
+            
+            switch response.result {
+            case .success(let detail):
+                completion(.success(detail))
+            case .failure(let error):
+                print("❌ Error decoding JSON:", error.localizedDescription)
+                completion(.failure(error))
+            }
+        }
+    }
+}
