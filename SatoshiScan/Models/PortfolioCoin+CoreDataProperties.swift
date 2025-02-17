@@ -18,6 +18,7 @@ extension PortfolioCoin {
     @NSManaged public var symbol: String?
     @NSManaged public var currentPrice: Double
     @NSManaged public var imageURL: String?
+    @NSManaged public var amount: Double
 }
 
 extension PortfolioCoin: Identifiable { }
