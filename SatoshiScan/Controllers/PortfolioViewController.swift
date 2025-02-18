@@ -10,6 +10,7 @@ import UIKit
 class PortfolioViewController: UIViewController {
     
     private let tableView = UITableView()
+    private let refreshControl = UIRefreshControl()
     private var portfolioCoins: [PortfolioCoin] = []
     private var filteredCoins: [PortfolioCoin] = []
     private var isFiltering: Bool {
@@ -39,6 +40,7 @@ class PortfolioViewController: UIViewController {
         title = "Portfolio"
         
         setupUI()
+        setupRefreshControl()
         fetchPortfolio()
         
         setupSearchController()
@@ -93,6 +95,18 @@ class PortfolioViewController: UIViewController {
         let symbols = portfolioCoins.map { "\($0.symbol?.lowercased() ?? "")usdt" }
         webSocketManager.delegate = self
         webSocketManager.connect(symbols: symbols)
+    }
+    
+    private func setupRefreshControl() {
+        refreshControl.addTarget(self, action: #selector(refreshPortfolio), for: .valueChanged)
+        tableView.refreshControl = refreshControl
+    }
+    
+    @objc private func refreshPortfolio() {
+        fetchPortfolio()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.refreshControl.endRefreshing()
+        }
     }
     
     @objc private func showSortOptions() {
@@ -181,6 +195,10 @@ extension PortfolioViewController: UITableViewDelegate {
         deleteAction.backgroundColor = .systemRed
         
         return UISwipeActionsConfiguration(actions: [deleteAction])
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 60
     }
 }
 

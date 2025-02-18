@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import UserNotifications
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
@@ -21,6 +22,22 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window.makeKeyAndVisible()
         
         applySavedTheme()
+        requestNotificationPermission()
+        
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            print("🔔 Notification status: \(settings.authorizationStatus.rawValue)")
+        }
+    }
+    
+    private func requestNotificationPermission() {
+        let center = UNUserNotificationCenter.current()
+        center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+            if let error = error {
+                print("Notification permission error: \(error.localizedDescription)")
+            } else {
+                print("Notification permission granted: \(granted)")
+            }
+        }
     }
     
     private func applySavedTheme() {

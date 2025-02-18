@@ -8,13 +8,16 @@
 import UIKit
 
 class CryptoListViewController: UIViewController {
+    
     private let tableView = UITableView()
     private let viewModel = CryptoViewModel()
+    private let refreshControl = UIRefreshControl()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupBindings()
+        setupRefreshControl()
         viewModel.fetchCryptoData()
         
     }
@@ -54,6 +57,18 @@ class CryptoListViewController: UIViewController {
             guard let cell = tableView.cellForRow(at: indexPath) as? CryptoCell else { continue }
             let coin = viewModel.coins[indexPath.row]
             cell.updatePrice(newPrice: coin.current_price)
+        }
+    }
+    
+    private func setupRefreshControl() {
+        refreshControl.addTarget(self, action: #selector(refreshData), for: .valueChanged)
+        tableView.refreshControl = refreshControl
+    }
+    
+    @objc private func refreshData() {
+        viewModel.fetchCryptoData()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.refreshControl.endRefreshing()
         }
     }
             

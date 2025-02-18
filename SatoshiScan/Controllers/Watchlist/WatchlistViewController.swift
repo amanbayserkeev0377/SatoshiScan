@@ -11,6 +11,7 @@ class WatchlistViewController: UIViewController {
     private let tableView = UITableView()
     private var watchlistCoins: [WatchlistCoin] = []
     private let webSocketManager = WebSocketManager()
+    private let refreshControl = UIRefreshControl()
     
     private let emptyLabel: UILabel = {
         let label = UILabel()
@@ -28,6 +29,7 @@ class WatchlistViewController: UIViewController {
         title = "Watchlist"
         
         setupTableView()
+        setupRefreshControl()
         fetchWatchlist()
         startWebSocketUpdates()
     }
@@ -82,6 +84,18 @@ class WatchlistViewController: UIViewController {
             current_price: watchlistCoin.currentPrice,
             image: watchlistCoin.imageURL ?? ""
         )
+    }
+    
+    private func setupRefreshControl() {
+        refreshControl.addTarget(self, action: #selector(refreshWatchlist), for: .valueChanged)
+        tableView.refreshControl = refreshControl
+    }
+    
+    @objc private func refreshWatchlist() {
+        fetchWatchlist()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.refreshControl.endRefreshing()
+        }
     }
 }
 
