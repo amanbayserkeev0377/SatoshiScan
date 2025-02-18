@@ -20,6 +20,12 @@ class WebSocketManager {
     weak var delegate: WebSocketManagerDelegate?
     
     func connect(symbols: [String]) {
+        
+        guard webSocketTask == nil else {
+            print("Websocket is already connected!")
+            return
+        }
+        
         let streamParams = symbols.map { "\($0.lowercased())@trade" }.joined(separator: "/")
         let urlString = "wss://stream.binance.com:9443/ws/\(streamParams)"
         guard let url = URL(string: urlString) else { return }
@@ -28,6 +34,7 @@ class WebSocketManager {
         webSocketTask?.resume()
         
         receiveMessage()
+        schedulePing()
     }
     
     func disconnect() {
@@ -69,6 +76,8 @@ class WebSocketManager {
     }
     
     private func handleDisconnection() {
+        webSocketTask = nil
+        
         guard reconnectAttempts < maxReconnectAttempts else {
             print("WebSocket failed to reconnect after \(maxReconnectAttempts) attempts")
             return
@@ -110,6 +119,22 @@ class WebSocketManager {
                 print("Error sending notification: \(error.localizedDescription)")
             } else {
                 print("Notification successfully scheduled!")
+            }
+        }
+    }
+    
+    private func schedulePing() {
+        DispatchQueue.global().asyncAfter(deadline: .now() + 30) { [weak self] in
+            guard let self = self, self.webSocketTask != nil else { return }
+            
+            self.webSocketTask?.sendPing { error in
+                if let error = error {
+                    print("Websocket ping failed:", error.localizedDescription)
+                    self.handleDisconnection()
+                } else {
+                    print("Websocket ping sent successfully")
+                    self.schedulePing()
+                }
             }
         }
     }

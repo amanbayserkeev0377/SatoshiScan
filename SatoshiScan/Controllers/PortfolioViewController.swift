@@ -52,6 +52,15 @@ class PortfolioViewController: UIViewController {
             target: self,
             action: #selector(showSortOptions)
         )
+        
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            title: "Clear All",
+            style: .plain,
+            target: self,
+            action: #selector(clearPortfolio)
+        )
+        
+        navigationItem.leftBarButtonItem?.tintColor = .systemRed
     }
     
     private func setupUI() {
@@ -107,6 +116,24 @@ class PortfolioViewController: UIViewController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             self.refreshControl.endRefreshing()
         }
+    }
+    
+    @objc private func clearPortfolio() {
+        let alert = UIAlertController(
+            title: "Clear Portfolio",
+            message: "Are you sure you want to remove all coins from your portfolio?",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Clear", style: .destructive, handler: { _ in
+            CoreDataManager.shared.clearPortfolio()
+            self.portfolioCoins.removeAll()
+            self.updateTotalValue()
+            self.tableView.reloadData()
+        }))
+        
+        present(alert, animated: true)
     }
     
     @objc private func showSortOptions() {

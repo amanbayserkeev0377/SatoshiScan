@@ -108,4 +108,15 @@ class CoreDataManager {
         }
     }
     
+    func clearPortfolio() {
+        let request: NSFetchRequest<NSFetchRequestResult> = PortfolioCoin.fetchRequest()
+        let deleteRequest = NSBatchDeleteRequest(fetchRequest: request)
+        
+        do {
+            try context.execute(deleteRequest)
+            saveContext()
+        } catch {
+            print("Failed to clear portfolio:", error.localizedDescription)
+        }
+    }
 }
