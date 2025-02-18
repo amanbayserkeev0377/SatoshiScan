@@ -10,23 +10,17 @@ import UIKit
 class CryptoListViewController: UIViewController {
     private let tableView = UITableView()
     private let viewModel = CryptoViewModel()
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupBindings()
         viewModel.fetchCryptoData()
         
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
-            title: "Portfolio",
-            style: .plain,
-            target: self,
-            action: #selector(openPortfolio)
-        )
     }
     
     private func setupUI() {
-        title = "SatoshiScan"
+        title = "Market"
         view.backgroundColor = .systemBackground
         
         tableView.dataSource = self

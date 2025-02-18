@@ -18,9 +18,11 @@ struct CoinGeckoAPI {
     }
     
     static func fetchCoins(completion: @escaping (Result<[Crypto], Error>) -> Void) {
+        let selectedCurrency = UserDefaults.standard.string(forKey: "selectedCurrency") ?? "USD"
+        
         let url = baseURL + Endpoint.coinsList.rawValue
         let parameters: [String: Any] = [
-            "vs_currency": "usd",
+            "vs_currency": selectedCurrency.lowercased(),
             "order": "market_cap_desc",
             "per_page": 20,
             "page": 1,

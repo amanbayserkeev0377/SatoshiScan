@@ -59,4 +59,53 @@ class CoreDataManager {
             return []
         }
     }
+    
+    func addToWatchList(coin: Crypto) {
+        let watchlistCoin = WatchlistCoin(context: context)
+        watchlistCoin.id = coin.id
+        watchlistCoin.name = coin.name
+        watchlistCoin.symbol = coin.symbol
+        watchlistCoin.currentPrice = coin.current_price
+        watchlistCoin.imageURL = coin.image
+        saveContext()
+    }
+    
+    func fetchWatchlist() -> [WatchlistCoin] {
+        let request: NSFetchRequest<WatchlistCoin> = WatchlistCoin.fetchRequest()
+        do {
+            return try context.fetch(request)
+        } catch {
+            print("Failed to fetch watchlist: \(error.localizedDescription)")
+            return []
+        }
+    }
+    
+    func isInWatchlist(coin: Crypto) -> Bool {
+        let request: NSFetchRequest<WatchlistCoin> = WatchlistCoin.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", coin.id)
+        
+        do {
+            let results = try context.fetch(request)
+            return !results.isEmpty
+        } catch {
+            print("Error checking watchlist: \(error.localizedDescription)")
+            return false
+        }
+    }
+    
+    func removeFromWatchlist(coin: Crypto) {
+        let request: NSFetchRequest<WatchlistCoin> = WatchlistCoin.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", coin.id)
+        
+        do {
+            let results = try context.fetch(request)
+            if let coinToDelete = results.first {
+                context.delete(coinToDelete)
+                saveContext()
+            }
+        } catch {
+            print("Error removing from watchlist: \(error.localizedDescription)")
+        }
+    }
+    
 }

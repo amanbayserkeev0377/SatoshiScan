@@ -36,7 +36,7 @@ class PortfolioViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
-        title = "My Portfolio"
+        title = "Portfolio"
         
         setupUI()
         fetchPortfolio()
@@ -188,6 +188,7 @@ extension PortfolioViewController: WebSocketManagerDelegate {
     func didReceivePriceUpdate(symbol: String, price: Double) {
         guard let index = portfolioCoins.firstIndex(where: { "\($0.symbol?.lowercased() ?? "")usdt" == symbol.lowercased() }) else { return }
         
+        let oldPrice = portfolioCoins[index].currentPrice
         portfolioCoins[index].currentPrice = price
         CoreDataManager.shared.saveContext()
         
@@ -196,6 +197,37 @@ extension PortfolioViewController: WebSocketManagerDelegate {
             
             if let cell = self.tableView.cellForRow(at: IndexPath(row: index, section: 0)) as? PortfolioCell {
                 cell.updatePrice(newPrice: price)
+            }
+        }
+        
+        checkPriceChange(symbol: symbol, oldPrice: oldPrice, newPrice: price)
+    }
+    
+    private func checkPriceChange(symbol: String, oldPrice: Double, newPrice: Double) {
+        let percentageChange = ( (newPrice - oldPrice) / oldPrice) * 100
+        
+        if abs(percentageChange) >= 10 {
+            let changeType = newPrice > oldPrice ? "increased" : "decreased"
+            let message = "\(symbol.uppercased()) has \(changeType) by \(String(format: "%.2f", percentageChange))%!"
+            
+            sendPriceAlert(title: "Crypto Alert", body: message)
+        }
+    }
+    
+    private func sendPriceAlert(title: String, body: String) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("Error sending notification: \(error.localizedDescription)")
+            } else {
+                print("Notification sent: \(body)")
             }
         }
     }

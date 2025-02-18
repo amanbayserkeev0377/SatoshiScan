@@ -11,6 +11,9 @@ import SDWebImage
 class CryptoCell: UITableViewCell {
     static let identifier = "CryptoCell"
     
+    private var isFavorite: Bool = false
+    private var crypto: Crypto?
+    
     private let coinImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
@@ -42,7 +45,15 @@ class CryptoCell: UITableViewCell {
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
-
+    
+    private let favoriteButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "star"), for: .normal)
+        button.tintColor = .gray
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
@@ -57,6 +68,7 @@ class CryptoCell: UITableViewCell {
         contentView.addSubview(nameLabel)
         contentView.addSubview(symbolLabel)
         contentView.addSubview(priceLabel)
+        contentView.addSubview(favoriteButton)
         
         NSLayoutConstraint.activate([
             coinImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
@@ -70,16 +82,44 @@ class CryptoCell: UITableViewCell {
             symbolLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
             symbolLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4),
             
-            priceLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            priceLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor)
+            priceLabel.trailingAnchor.constraint(equalTo: favoriteButton.leadingAnchor, constant: -8),
+            priceLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            
+            favoriteButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            favoriteButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            favoriteButton.widthAnchor.constraint(equalToConstant: 30),
+            favoriteButton.heightAnchor.constraint(equalToConstant: 30)
         ])
+        
+        favoriteButton.addTarget(self, action: #selector(favoriteTapped), for: .touchUpInside)
     }
 
+    @objc private func favoriteTapped() {
+        guard let coin = crypto else { return }
+        
+        if isFavorite {
+            CoreDataManager.shared.removeFromWatchlist(coin: coin)
+            favoriteButton.setImage(UIImage(systemName: "star"), for: .normal)
+            favoriteButton.tintColor = .gray
+        } else {
+            CoreDataManager.shared.addToWatchList(coin: coin)
+            favoriteButton.setImage(UIImage(systemName: "star.fill"), for: .normal)
+            favoriteButton.tintColor = .systemYellow
+        }
+        
+        isFavorite.toggle()
+    }
+    
     func configure(with coin: Crypto) {
+        self.crypto = coin
         nameLabel.text = coin.name
         symbolLabel.text = coin.symbol.uppercased()
         priceLabel.text = String(format: "$%.2f", coin.current_price)
         coinImageView.sd_setImage(with: URL(string: coin.image), placeholderImage: UIImage(systemName: "bitcoinsign.circle"))
+        
+        isFavorite = CoreDataManager.shared.isInWatchlist(coin: coin)
+        favoriteButton.setImage(UIImage(systemName: isFavorite ? "star.fill" : "star"), for: .normal)
+        favoriteButton.tintColor = isFavorite ? .systemYellow : .gray
     }
     
     func updatePrice(newPrice: Double) {

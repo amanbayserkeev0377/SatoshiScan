@@ -12,6 +12,14 @@ class CryptoViewModel {
     var onDataUpdated: (() -> Void)?
     private let webSocketManager = WebSocketManager()
     
+    init() {
+        NotificationCenter.default.addObserver(self, selector: #selector(currencyChanged), name: Notification.Name("CurrencyChanged"), object: nil)
+    }
+    
+    @objc private func currencyChanged() {
+        fetchCryptoData()
+    }
+    
     func fetchCryptoData() {
         CoinGeckoAPI.fetchCoins { [weak self] result in
             DispatchQueue.main.async {

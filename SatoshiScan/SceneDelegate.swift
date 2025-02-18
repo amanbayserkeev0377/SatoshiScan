@@ -15,10 +15,27 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         
-        window = UIWindow(windowScene: windowScene)
-        let navController = UINavigationController(rootViewController: CryptoListViewController())
-        window?.rootViewController = navController
-        window?.makeKeyAndVisible()
+        let window = UIWindow(windowScene: windowScene)
+        window.rootViewController = MainTabBarController()
+        self.window = window
+        window.makeKeyAndVisible()
+        
+        applySavedTheme()
+    }
+    
+    private func applySavedTheme() {
+        let selectedTheme = UserDefaults.standard.string(forKey: "selectedTheme") ?? "System"
+        
+        guard let window = window else { return }
+        
+        switch selectedTheme {
+        case "Light":
+            window.overrideUserInterfaceStyle = .light
+        case "Dark":
+            window.overrideUserInterfaceStyle = .dark
+        default:
+            window.overrideUserInterfaceStyle = .unspecified
+        }
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {

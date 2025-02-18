@@ -8,4 +8,12 @@
         <attribute name="name" optional="YES" attributeType="String"/>
         <attribute name="symbol" optional="YES" attributeType="String"/>
     </entity>
+    <entity name="WatchlistCoin" representedClassName="WatchlistCoin" syncable="YES">
+        <attribute name="amount" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="currentPrice" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="id" optional="YES" attributeType="String"/>
+        <attribute name="imageURL" optional="YES" attributeType="String"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="symbol" optional="YES" attributeType="String"/>
+    </entity>
 </model>
