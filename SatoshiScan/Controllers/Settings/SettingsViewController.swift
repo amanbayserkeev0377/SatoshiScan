@@ -14,6 +14,7 @@ class SettingsViewController: UIViewController {
     private enum Setting: String, CaseIterable {
         case currency = "Currency"
         case theme = "Theme"
+        case priceAlerts = "Price Alerts"
     }
 
     override func viewDidLoad() {
@@ -72,6 +73,9 @@ extension SettingsViewController: UITableViewDataSource, UITableViewDelegate {
         case .theme:
             let themeVC = ThemeSelectionViewController()
             navigationController?.pushViewController(themeVC, animated: true)
+        case .priceAlerts:
+            let alertsVC = PriceAlertsViewController()
+            navigationController?.pushViewController(alertsVC, animated: true)
         }
         
         tableView.deselectRow(at: indexPath, animated: true)

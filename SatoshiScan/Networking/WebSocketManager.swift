@@ -138,4 +138,24 @@ class WebSocketManager {
             }
         }
     }
+    
+    private func checkPriceAlerts(symbol: String, newPrice: Double) {
+        let alerts = CoreDataManager.shared.fetchPriceAlerts()
+        
+        for alert in alerts {
+            guard let alertSymbol = alert.symbol?.lowercased() else { continue }
+            if alertSymbol == symbol.lowercased() {
+                sendPriceAlert(title: "Price Alert", body: "\(symbol.uppercased()) reached $\(alert.targetPrice)!")
+                CoreDataManager.shared.removePriceAlert(alert: alert)
+            }
+        }
+        
+        func didReceivePriceUpdate(symbol: String, price: Double) {
+            checkPriceAlerts(symbol: symbol, newPrice: price)
+            
+            DispatchQueue.main.async {
+                self.delegate?.didReceivePriceUpdate(symbol: symbol, price: price)
+            }
+        }
+    }
 }

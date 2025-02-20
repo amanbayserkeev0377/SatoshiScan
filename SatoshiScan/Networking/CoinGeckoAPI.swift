@@ -9,6 +9,15 @@ import Foundation
 import Alamofire
 import DGCharts
 
+struct CryptoAPIResponse: Decodable {
+    let id: String
+    let name: String
+    let symbol: String
+    let current_price: Double
+    let image: String
+    let price_change_percentage_24h: Double
+}
+
 struct CoinGeckoAPI {
     static let baseURL = "https://api.coingecko.com/api/v3"
     
@@ -26,12 +35,23 @@ struct CoinGeckoAPI {
             "order": "market_cap_desc",
             "per_page": 20,
             "page": 1,
-            "sparkline": false
+            "sparkline": false,
+            "price_change_percentage": "24h"
         ]
         
-        AF.request(url, parameters: parameters).responseDecodable(of: [Crypto].self) { response in
+        AF.request(url, parameters: parameters).responseDecodable(of: [CryptoAPIResponse].self) { response in
             switch response.result {
-            case .success(let coins):
+            case .success(let coinsData):
+                let coins = coinsData.map { apiCoin in
+                    Crypto(
+                        id: apiCoin.id,
+                        name: apiCoin.name,
+                        symbol: apiCoin.symbol,
+                        current_price: apiCoin.current_price,
+                        image: apiCoin.image,
+                        price_change_percentage_24h: apiCoin.price_change_percentage_24h
+                    )
+                }
                 completion(.success(coins))
             case .failure(let error):
                 completion(.failure(error))
@@ -77,7 +97,7 @@ extension CoinGeckoAPI {
             case .success(let detail):
                 completion(.success(detail))
             case .failure(let error):
-                print("❌ Error decoding JSON:", error.localizedDescription)
+                print("Error decoding JSON:", error.localizedDescription)
                 completion(.failure(error))
             }
         }

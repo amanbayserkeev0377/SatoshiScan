@@ -13,6 +13,7 @@ class PortfolioViewController: UIViewController {
     private let refreshControl = UIRefreshControl()
     private var portfolioCoins: [PortfolioCoin] = []
     private var filteredCoins: [PortfolioCoin] = []
+    private var currentSortOption: SortOption = .nameAscending
     private var isFiltering: Bool {
         return searchController.isActive && !(searchController.searchBar.text?.isEmpty ?? true)
     }
@@ -36,15 +37,16 @@ class PortfolioViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
-        title = "Portfolio"
-        
         setupUI()
         setupRefreshControl()
         fetchPortfolio()
-        
         setupSearchController()
         startWebSocketUpdates()
+    }
+    
+    private func setupUI() {
+        view.backgroundColor = .systemBackground
+        title = "Portfolio"
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(
             title: "Sort",
@@ -59,11 +61,8 @@ class PortfolioViewController: UIViewController {
             target: self,
             action: #selector(clearPortfolio)
         )
-        
         navigationItem.leftBarButtonItem?.tintColor = .systemRed
-    }
-    
-    private func setupUI() {
+        
         view.addSubview(totalValueLabel)
         view.addSubview(tableView)
         
@@ -86,6 +85,7 @@ class PortfolioViewController: UIViewController {
     
     private func fetchPortfolio() {
         portfolioCoins = CoreDataManager.shared.fetchPortfolio()
+        sortPortfolio()
         updateTotalValue()
         tableView.reloadData()
     }
@@ -137,57 +137,28 @@ class PortfolioViewController: UIViewController {
     }
     
     @objc private func showSortOptions() {
-        let alert = UIAlertController(title: "Sort Portfolio", message: "Choose sotring option", preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: "Sort Portfolio", message: "Choose sorting option", preferredStyle: .actionSheet)
         
-        alert.addAction(UIAlertAction(title: "By Price (High -> Low)", style: .default, handler: { _ in
-            self.sortPortfolio(by: .priceDescending)
-        }))
-        alert.addAction(UIAlertAction(title: "By Price (Low -> High)", style: .default, handler: { _ in
-            self.sortPortfolio(by: .priceAscending)
-        }))
-        alert.addAction(UIAlertAction(title: "By Name (A-Z)", style: .default, handler: { _ in
-            self.sortPortfolio(by: .nameAscending)
-        }))
-        alert.addAction(UIAlertAction(title: "By Name (Z-A)", style: .default, handler: { _ in
-            self.sortPortfolio(by: .nameDescending)
-        }))
-        alert.addAction(UIAlertAction(title: "By Amount (High -> Low)", style: .default, handler: { _ in
-            self.sortPortfolio(by: .amountDescending)
-        }))
-        alert.addAction(UIAlertAction(title: "By Amount (Low -> High)", style: .default, handler: { _ in
-            self.sortPortfolio(by: .amountAscending)
-        }))
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        let options: [(String, SortOption)] = [
+            ("Name (A-Z)", .nameAscending),
+            ("Name (Z-A)", .nameDescending),
+            ("Price (Low to High)", .priceAscending),
+            ("Price (High to Low)", .priceDescending),
+            ("Amount (High to Low)", .amountDescending),
+            ("Amount (Low to High)", .amountAscending)
+        ]
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
         
         present(alert, animated: true)
     }
     
-    private enum SortOption {
-        case priceDescending, priceAscending
-        case nameAscending, nameDescending
-        case amountDescending, amountAscending
-    }
-    
-    private func sortPortfolio(by option: SortOption) {
-        switch option {
-        case .priceDescending:
-            portfolioCoins.sort { $0.currentPrice > $1.currentPrice }
-        case .priceAscending:
-            portfolioCoins.sort { $0.currentPrice < $1.currentPrice }
-        case .nameAscending:
-            portfolioCoins.sort { ($0.name ?? "") < ($1.name ?? "") }
-        case .nameDescending:
-            portfolioCoins.sort { ($0.name ?? "") > ($1.name ?? "") }
-        case .amountDescending:
-            portfolioCoins.sort { $0.amount > $1.amount }
-        case .amountAscending:
-            portfolioCoins.sort { $0.amount < $1.amount }
-        }
-        
+    private func sortPortfolio() {
+        SortManager.sortCoins(&portfolioCoins, by: currentSortOption)
         tableView.reloadData()
     }
-    
 }
+
 // MARK: - Extensions (temporary name)
 extension PortfolioViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {

@@ -19,22 +19,20 @@ class CryptoCell: UITableViewCell {
         imageView.contentMode = .scaleAspectFit
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = 20
-        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.layer.masksToBounds = true
         return imageView
     }()
     
     private let nameLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 16, weight: .bold)
-        label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
     private let symbolLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 14, weight: .medium)
+        label.font = .systemFont(ofSize: 14, weight: .regular)
         label.textColor = .gray
-        label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
@@ -42,7 +40,16 @@ class CryptoCell: UITableViewCell {
         let label = UILabel()
         label.font = .systemFont(ofSize: 16, weight: .bold)
         label.textAlignment = .right
-        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let changeLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 14, weight: .semibold)
+        label.textAlignment = .right
+        label.layer.cornerRadius = 5
+        label.layer.masksToBounds = true
+        label.clipsToBounds = true
         return label
     }()
     
@@ -50,7 +57,6 @@ class CryptoCell: UITableViewCell {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: "star"), for: .normal)
         button.tintColor = .gray
-        button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
     
@@ -64,11 +70,10 @@ class CryptoCell: UITableViewCell {
     }
     
     private func setupUI() {
-        contentView.addSubview(coinImageView)
-        contentView.addSubview(nameLabel)
-        contentView.addSubview(symbolLabel)
-        contentView.addSubview(priceLabel)
-        contentView.addSubview(favoriteButton)
+        [coinImageView, nameLabel, symbolLabel, priceLabel, favoriteButton, changeLabel].forEach {
+            contentView.addSubview($0)
+            $0.translatesAutoresizingMaskIntoConstraints = false
+        }
         
         NSLayoutConstraint.activate([
             coinImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
@@ -77,18 +82,26 @@ class CryptoCell: UITableViewCell {
             coinImageView.heightAnchor.constraint(equalToConstant: 40),
             
             nameLabel.leadingAnchor.constraint(equalTo: coinImageView.trailingAnchor, constant: 12),
-            nameLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
+            nameLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
+            nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: priceLabel.leadingAnchor, constant: -8),
             
             symbolLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
-            symbolLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4),
+            symbolLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 2),
+            symbolLabel.trailingAnchor.constraint(lessThanOrEqualTo: priceLabel.leadingAnchor, constant: -8),
+            symbolLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -10),
             
-            priceLabel.trailingAnchor.constraint(equalTo: favoriteButton.leadingAnchor, constant: -8),
+            priceLabel.trailingAnchor.constraint(equalTo: favoriteButton.leadingAnchor, constant: -12),
             priceLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
             
             favoriteButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             favoriteButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
             favoriteButton.widthAnchor.constraint(equalToConstant: 30),
-            favoriteButton.heightAnchor.constraint(equalToConstant: 30)
+            favoriteButton.heightAnchor.constraint(equalToConstant: 30),
+            
+            changeLabel.leadingAnchor.constraint(equalTo: priceLabel.leadingAnchor),
+            changeLabel.topAnchor.constraint(equalTo: priceLabel.bottomAnchor, constant: 4),
+            changeLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 50),
+            changeLabel.heightAnchor.constraint(equalToConstant: 20)
         ])
         
         favoriteButton.addTarget(self, action: #selector(favoriteTapped), for: .touchUpInside)
@@ -97,17 +110,15 @@ class CryptoCell: UITableViewCell {
     @objc private func favoriteTapped() {
         guard let coin = crypto else { return }
         
-        if isFavorite {
-            CoreDataManager.shared.removeFromWatchlist(coin: coin)
-            favoriteButton.setImage(UIImage(systemName: "star"), for: .normal)
-            favoriteButton.tintColor = .gray
-        } else {
-            CoreDataManager.shared.addToWatchList(coin: coin)
-            favoriteButton.setImage(UIImage(systemName: "star.fill"), for: .normal)
-            favoriteButton.tintColor = .systemYellow
-        }
-        
         isFavorite.toggle()
+        favoriteButton.setImage(UIImage(systemName: isFavorite ? "star.fill" : "star"), for: .normal)
+        favoriteButton.tintColor = isFavorite ? .systemYellow : .gray
+        
+        if isFavorite {
+            CoreDataManager.shared.addToWatchList(coin: coin)
+        } else {
+            CoreDataManager.shared.removeFromWatchlist(coin: coin)
+        }
     }
     
     func configure(with coin: Crypto) {
@@ -120,11 +131,53 @@ class CryptoCell: UITableViewCell {
         isFavorite = CoreDataManager.shared.isInWatchlist(coin: coin)
         favoriteButton.setImage(UIImage(systemName: isFavorite ? "star.fill" : "star"), for: .normal)
         favoriteButton.tintColor = isFavorite ? .systemYellow : .gray
+        
+        updateChangeLabel(changePercentage: coin.price_change_percentage_24h)
     }
     
-    func updatePrice(newPrice: Double) {
-        UIView.transition(with: priceLabel, duration: 0.3, options: .transitionCrossDissolve, animations: {
-            self.priceLabel.text = String(format: "$%.2f", newPrice)
-        }, completion: nil)
+    func updatePrice(newPrice: Double, changePercentage: Double) {
+        DispatchQueue.main.async {
+            UIView.transition(with: self.priceLabel, duration: 0.3, options: .transitionCrossDissolve, animations: {
+                self.priceLabel.text = String(format: "$%.2f", newPrice)
+            }, completion: nil)
+            
+            UIView.transition(with: self.changeLabel, duration: 0.3, options: .transitionCrossDissolve, animations: {
+                self.updateChangeLabel(changePercentage: changePercentage)
+            }, completion: nil)
+        }
+    }
+    
+    private func updateChangeLabel(changePercentage: Double) {
+        changeLabel.text = String(format: "%.2f%%", changePercentage)
+        
+        if changePercentage == 0.00 {
+            changeLabel.textColor = .gray
+            changeLabel.backgroundColor = .clear
+        } else {
+            let color: UIColor = changePercentage > 0 ? .systemGreen : .systemRed
+            changeLabel.textColor = color
+            changeLabel.backgroundColor = color.withAlphaComponent(0.2)
+        }
+        
+        changeLabel.setPadding(horizontal: 8, vertical: 4)
+    }
+    
+    private func animatePriceChange(color: UIColor) {
+        let feedback = UIImpactFeedbackGenerator(style: .light)
+        feedback.impactOccurred()
+        
+        UIView.animate(withDuration: 0.3, animations: {
+            self.priceLabel.textColor = color
+        }) { _ in
+            UIView.animate(withDuration: 0.3) {
+                self.priceLabel.textColor = .label
+            }
+        }
+    }
+}
+
+extension UILabel {
+    func setPadding(horizontal: CGFloat = 8, vertical: CGFloat = 4) {
+        self.drawText(in: bounds.insetBy(dx: horizontal, dy: vertical))
     }
 }

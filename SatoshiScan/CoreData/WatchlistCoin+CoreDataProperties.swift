@@ -22,6 +22,8 @@ extension WatchlistCoin {
     @NSManaged public var imageURL: String?
     @NSManaged public var name: String?
     @NSManaged public var symbol: String?
+    @NSManaged public var priceChangePercentage24h: Double
+    @NSManaged public var previousDayPrice: Double
 
 }
 

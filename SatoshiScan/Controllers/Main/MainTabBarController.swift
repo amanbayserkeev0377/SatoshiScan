@@ -14,7 +14,7 @@ class MainTabBarController: UITabBarController {
     }
     
     private func setupTabs() {
-        let marketVC = UINavigationController(rootViewController: CryptoListViewController())
+        let marketVC = UINavigationController(rootViewController: MarketViewController())
         let portfolioVC = UINavigationController(rootViewController: PortfolioViewController())
         let watchlistVC = UINavigationController(rootViewController: WatchlistViewController())
         let settingsVC = UINavigationController(rootViewController: SettingsViewController())

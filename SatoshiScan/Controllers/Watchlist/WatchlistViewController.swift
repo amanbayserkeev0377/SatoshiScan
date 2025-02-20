@@ -12,6 +12,7 @@ class WatchlistViewController: UIViewController {
     private var watchlistCoins: [WatchlistCoin] = []
     private let webSocketManager = WebSocketManager()
     private let refreshControl = UIRefreshControl()
+    private var currentSortOption: SortOption = .nameAscending
     
     private let emptyLabel: UILabel = {
         let label = UILabel()
@@ -25,13 +26,19 @@ class WatchlistViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
-        title = "Watchlist"
-        
+        setupUI()
         setupTableView()
         setupRefreshControl()
         fetchWatchlist()
         startWebSocketUpdates()
+    }
+    
+    private func setupUI() {
+        view.backgroundColor = .systemBackground
+        title = "Watchlist"
+        
+        let sortButton = UIBarButtonItem(title: "Sort", style: .plain, target: self, action: #selector(showSortOptions))
+        navigationItem.rightBarButtonItem = sortButton
     }
     
     private func setupTableView() {
@@ -52,6 +59,12 @@ class WatchlistViewController: UIViewController {
     
     private func fetchWatchlist() {
         watchlistCoins = CoreDataManager.shared.fetchWatchlist()
+        
+        // LOG
+        for coin in watchlistCoins {
+            print("Fetched \(coin.symbol ?? "") - Change: \(coin.priceChangePercentage24h)")
+        }
+        
         tableView.reloadData()
         updateEmptyState()
     }
@@ -65,7 +78,7 @@ class WatchlistViewController: UIViewController {
             ])
             tableView.isHidden = true
         } else {
-            emptyLabel.removeFromSuperview()
+            emptyLabel.isHidden = !watchlistCoins.isEmpty
             tableView.isHidden = false
         }
     }
@@ -82,13 +95,56 @@ class WatchlistViewController: UIViewController {
             name: watchlistCoin.name ?? "",
             symbol: watchlistCoin.symbol ?? "",
             current_price: watchlistCoin.currentPrice,
-            image: watchlistCoin.imageURL ?? ""
+            image: watchlistCoin.imageURL ?? "",
+            price_change_percentage_24h: watchlistCoin.priceChangePercentage24h
         )
     }
     
     private func setupRefreshControl() {
         refreshControl.addTarget(self, action: #selector(refreshWatchlist), for: .valueChanged)
         tableView.refreshControl = refreshControl
+    }
+    
+    private func sortCoins() {
+        var cryptoCoins = watchlistCoins.map { convertToCrypto(from: $0) }
+        SortManager.sortCoins(&cryptoCoins, by: currentSortOption)
+        watchlistCoins = cryptoCoins.map { convertToWatchlistCoin(from: $0) }
+        tableView.reloadData()
+    }
+    
+    private func convertToWatchlistCoin(from crypto: Crypto) -> WatchlistCoin {
+        let watchlistCoin = WatchlistCoin(context: CoreDataManager.shared.context)
+        watchlistCoin.id = crypto.id
+        watchlistCoin.name = crypto.name
+        watchlistCoin.symbol = crypto.symbol
+        watchlistCoin.currentPrice = crypto.current_price
+        watchlistCoin.imageURL = crypto.image
+        watchlistCoin.priceChangePercentage24h = crypto.price_change_percentage_24h
+        return watchlistCoin
+    }
+    
+    @objc private func showSortOptions() {
+        let alert = UIAlertController(title: "Sort by", message: nil, preferredStyle: .actionSheet)
+        
+        let options: [(String, SortOption)] = [
+            ("Name (A-Z)", .nameAscending),
+            ("Name (Z-A)", .nameDescending),
+            ("Price (Low to High)", .priceAscending),
+            ("Price (High to Low)", .priceDescending),
+            ("Change (Low to High)", .changeAscending),
+            ("Change (High to Low)", .changeDescending)
+        ]
+        
+        options.forEach { title, option in
+            alert.addAction(UIAlertAction(title: title, style: .default, handler: { _ in
+                self.currentSortOption = option
+                self.sortCoins()
+            }))
+        }
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        
+        present(alert, animated: true)
     }
     
     @objc private func refreshWatchlist() {
@@ -144,14 +200,31 @@ extension WatchlistViewController: UITableViewDataSource, UITableViewDelegate {
 extension WatchlistViewController: WebSocketManagerDelegate {
     func didReceivePriceUpdate(symbol: String, price: Double) {
         guard let index = watchlistCoins.firstIndex(where: { "\($0.symbol?.lowercased() ?? "")usdt" == symbol.lowercased() }) else { return }
+        guard self.tableView.window != nil else { return }
         
-        watchlistCoins[index].currentPrice = price
+        let previousPrice = watchlistCoins[index].currentPrice
+        guard previousPrice > 0 else { return }
+        
+        if watchlistCoins[index].previousDayPrice == 0 {
+            watchlistCoins[index].previousDayPrice = previousPrice
+        }
+        
+        let changePercentage = ((price - watchlistCoins[index].previousDayPrice) / watchlistCoins[index].previousDayPrice) * 100
+        
+        let roundedChange = round(changePercentage * 100) / 100
+        watchlistCoins[index].priceChangePercentage24h = abs(roundedChange) < 0.01 ? 0.01 : roundedChange
+
+        watchlistCoins[index].setValue(changePercentage, forKey: "priceChangePercentage24h")
         CoreDataManager.shared.saveContext()
         
         DispatchQueue.main.async {
-            if let cell = self.tableView.cellForRow(at: IndexPath(row: index, section: 0)) as? CryptoCell {
-                cell.updatePrice(newPrice: price)
+            let indexPath = IndexPath(row: index, section: 0)
+            
+            if let cell = self.tableView.cellForRow(at: indexPath) as? CryptoCell {
+                cell.updatePrice(newPrice: price, changePercentage: changePercentage)
             }
+            
+            self.tableView.reloadRows(at: [indexPath], with: .none)
         }
     }
 }

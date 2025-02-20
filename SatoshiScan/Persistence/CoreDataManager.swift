@@ -67,6 +67,8 @@ class CoreDataManager {
         watchlistCoin.symbol = coin.symbol
         watchlistCoin.currentPrice = coin.current_price
         watchlistCoin.imageURL = coin.image
+        watchlistCoin.priceChangePercentage24h = coin.price_change_percentage_24h
+        watchlistCoin.previousDayPrice = coin.current_price
         saveContext()
     }
     
@@ -118,5 +120,27 @@ class CoreDataManager {
         } catch {
             print("Failed to clear portfolio:", error.localizedDescription)
         }
+    }
+    
+    func addPriceAlert(symbol: String, targetPrice: Double) {
+        let priceAlert = PriceAlert(context: context)
+        priceAlert.symbol = symbol
+        priceAlert.targetPrice = targetPrice
+        saveContext()
+    }
+    
+    func fetchPriceAlerts() -> [PriceAlert] {
+        let request: NSFetchRequest<PriceAlert> = PriceAlert.fetchRequest()
+        do {
+            return try context.fetch(request)
+        } catch {
+            print("Error fetching price alerts: \(error.localizedDescription)")
+            return []
+        }
+    }
+    
+    func removePriceAlert(alert: PriceAlert) {
+        context.delete(alert)
+        saveContext()
     }
 }

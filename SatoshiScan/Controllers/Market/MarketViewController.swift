@@ -1,5 +1,5 @@
 //
-//  CryptoListViewController.swift
+//  MarketViewController.swift
 //  SatoshiScan
 //
 //  Created by Aman on 13/2/25.
@@ -7,11 +7,14 @@
 
 import UIKit
 
-class CryptoListViewController: UIViewController {
+class MarketViewController: UIViewController {
     
     private let tableView = UITableView()
-    private let viewModel = CryptoViewModel()
+    public let viewModel = CryptoViewModel()
     private let refreshControl = UIRefreshControl()
+    private var currentSortOption: SortOption = .nameAscending
+    
+    var cryptocurrencies: [CryptoCurrency] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -25,6 +28,9 @@ class CryptoListViewController: UIViewController {
     private func setupUI() {
         title = "Market"
         view.backgroundColor = .systemBackground
+        
+        let sortButton = UIBarButtonItem(title: "Sort", style: .plain, target: self, action: #selector(showSortOptions))
+        navigationItem.rightBarButtonItem = sortButton
         
         tableView.dataSource = self
         tableView.delegate = self
@@ -45,6 +51,7 @@ class CryptoListViewController: UIViewController {
     private func setupBindings() {
         viewModel.onDataUpdated = { [weak self] in
             DispatchQueue.main.async {
+                self?.cryptocurrencies = self?.viewModel.coins.map { CryptoCurrency(symbol: $0.symbol, name: $0.name, imageURL: $0.image) } ?? []
                 self?.tableView.reloadData()
             }
         }
@@ -56,13 +63,43 @@ class CryptoListViewController: UIViewController {
         for indexPath in visibleRows {
             guard let cell = tableView.cellForRow(at: indexPath) as? CryptoCell else { continue }
             let coin = viewModel.coins[indexPath.row]
-            cell.updatePrice(newPrice: coin.current_price)
+            
+            cell.updatePrice(newPrice: coin.current_price, changePercentage: coin.price_change_percentage_24h)
         }
     }
     
     private func setupRefreshControl() {
         refreshControl.addTarget(self, action: #selector(refreshData), for: .valueChanged)
         tableView.refreshControl = refreshControl
+    }
+    
+    private func sortCoins() {
+        SortManager.sortCoins(&viewModel.coins, by: currentSortOption)
+        tableView.reloadData()
+    }
+    
+    @objc private func showSortOptions() {
+        let alert = UIAlertController(title: "Sort by", message: nil, preferredStyle: .actionSheet)
+        
+        let options: [(String, SortOption)] = [
+            ("Name (A-Z)", .nameAscending),
+            ("Name (Z-A)", .nameDescending),
+            ("Price (Low to High)", .priceAscending),
+            ("Price (High to Low)", .priceDescending),
+            ("Change (Low to High)", .changeAscending),
+            ("Change (High to Low)", .changeDescending)
+        ]
+        
+        options.forEach { title, option in
+            alert.addAction(UIAlertAction(title: title, style: .default, handler: { _ in
+                self.currentSortOption = option
+                self.sortCoins()
+            }))
+        }
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        
+        present(alert, animated: true)
     }
     
     @objc private func refreshData() {
@@ -80,7 +117,7 @@ class CryptoListViewController: UIViewController {
 
 
 // MARK: - UITableViewDataSource, UITableViewDelegate
-extension CryptoListViewController: UITableViewDataSource {
+extension MarketViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return viewModel.coins.count
     }
@@ -95,7 +132,7 @@ extension CryptoListViewController: UITableViewDataSource {
     }
 }
 
-extension CryptoListViewController: UITableViewDelegate {
+extension MarketViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let selectedCoin = viewModel.coins[indexPath.row]
         let detailVC = CryptoDetailViewController(coin: selectedCoin)

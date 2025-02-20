@@ -22,3 +22,17 @@ extension PortfolioCoin {
 }
 
 extension PortfolioCoin: Identifiable { }
+
+extension PortfolioCoin: SortableCrypto {
+    var currentPrice: Double {
+        return self.currentPrice
+    }
+    
+    var priceChange: Double? {
+        return nil
+    }
+    
+    var nameValue: String {
+        return self.name ?? "Unknown"
+    }
+}

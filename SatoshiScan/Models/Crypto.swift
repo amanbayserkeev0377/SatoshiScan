@@ -13,4 +13,5 @@ struct Crypto: Decodable {
     let symbol: String
     var current_price: Double
     let image: String
+    let price_change_percentage_24h: Double
 }
