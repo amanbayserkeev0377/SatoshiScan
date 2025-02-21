@@ -90,15 +90,15 @@ class CryptoCell: UITableViewCell {
             symbolLabel.trailingAnchor.constraint(lessThanOrEqualTo: priceLabel.leadingAnchor, constant: -8),
             symbolLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -10),
             
-            priceLabel.trailingAnchor.constraint(equalTo: favoriteButton.leadingAnchor, constant: -12),
-            priceLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            
             favoriteButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             favoriteButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
             favoriteButton.widthAnchor.constraint(equalToConstant: 30),
             favoriteButton.heightAnchor.constraint(equalToConstant: 30),
             
-            changeLabel.leadingAnchor.constraint(equalTo: priceLabel.leadingAnchor),
+            priceLabel.trailingAnchor.constraint(equalTo: favoriteButton.leadingAnchor, constant: -12),
+            priceLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            
+            changeLabel.trailingAnchor.constraint(equalTo: priceLabel.trailingAnchor),
             changeLabel.topAnchor.constraint(equalTo: priceLabel.bottomAnchor, constant: 4),
             changeLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 50),
             changeLabel.heightAnchor.constraint(equalToConstant: 20)
@@ -106,7 +106,9 @@ class CryptoCell: UITableViewCell {
         
         favoriteButton.addTarget(self, action: #selector(favoriteTapped), for: .touchUpInside)
     }
-
+    
+    // MARK: - Favorite
+    
     @objc private func favoriteTapped() {
         guard let coin = crypto else { return }
         
@@ -121,11 +123,15 @@ class CryptoCell: UITableViewCell {
         }
     }
     
+    // MARK: - Configure
+    
     func configure(with coin: Crypto) {
         self.crypto = coin
         nameLabel.text = coin.name
         symbolLabel.text = coin.symbol.uppercased()
         priceLabel.text = String(format: "$%.2f", coin.current_price)
+        
+        
         coinImageView.sd_setImage(with: URL(string: coin.image), placeholderImage: UIImage(systemName: "bitcoinsign.circle"))
         
         isFavorite = CoreDataManager.shared.isInWatchlist(coin: coin)
@@ -158,8 +164,6 @@ class CryptoCell: UITableViewCell {
             changeLabel.textColor = color
             changeLabel.backgroundColor = color.withAlphaComponent(0.2)
         }
-        
-        changeLabel.setPadding(horizontal: 8, vertical: 4)
     }
     
     private func animatePriceChange(color: UIColor) {
@@ -173,11 +177,5 @@ class CryptoCell: UITableViewCell {
                 self.priceLabel.textColor = .label
             }
         }
-    }
-}
-
-extension UILabel {
-    func setPadding(horizontal: CGFloat = 8, vertical: CGFloat = 4) {
-        self.drawText(in: bounds.insetBy(dx: horizontal, dy: vertical))
     }
 }

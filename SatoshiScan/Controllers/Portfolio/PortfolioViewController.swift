@@ -14,9 +14,11 @@ class PortfolioViewController: UIViewController {
     private var portfolioCoins: [PortfolioCoin] = []
     private var filteredCoins: [PortfolioCoin] = []
     private var currentSortOption: SortOption = .nameAscending
+    
     private var isFiltering: Bool {
         return searchController.isActive && !(searchController.searchBar.text?.isEmpty ?? true)
     }
+    
     private let webSocketManager = WebSocketManager()
     
     private let totalValueLabel: UILabel = {
@@ -91,7 +93,9 @@ class PortfolioViewController: UIViewController {
     }
     
     private func updateTotalValue() {
-        let totalValue = portfolioCoins.reduce(into: 0.0) { $0 += $1.currentPrice * $1.amount }
+        let totalValue = portfolioCoins.reduce(into: 0.0) {
+            $0 += $1.currentPrice * $1.amount
+        }
         totalValueLabel.text = "Total Portfolio Value: $\(String(format: "%.2f", totalValue))"
     }
     
@@ -148,6 +152,13 @@ class PortfolioViewController: UIViewController {
             ("Amount (Low to High)", .amountAscending)
         ]
         
+        for (title, option) in options {
+            alert.addAction(UIAlertAction(title: title, style: .default, handler: { _ in
+                self.currentSortOption = option
+                self.sortPortfolio()
+            }))
+        }
+        
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
         
         present(alert, animated: true)
@@ -159,7 +170,7 @@ class PortfolioViewController: UIViewController {
     }
 }
 
-// MARK: - Extensions (temporary name)
+// MARK: - UITableViewDataSource
 extension PortfolioViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return isFiltering ? filteredCoins.count : portfolioCoins.count
@@ -175,9 +186,13 @@ extension PortfolioViewController: UITableViewDataSource {
     }
 }
 
+// MARK: - UITableViewDelegate
 extension PortfolioViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { [weak self] _, _, completionHandler in
+        let deleteAction = UIContextualAction(
+            style: .destructive,
+            title: "Delete"
+        ) { [weak self] _, _, completionHandler in
             guard let self = self else { return }
             
             let coinToDelete = portfolioCoins[indexPath.row]
@@ -191,7 +206,6 @@ extension PortfolioViewController: UITableViewDelegate {
         }
         
         deleteAction.backgroundColor = .systemRed
-        
         return UISwipeActionsConfiguration(actions: [deleteAction])
     }
     
@@ -200,6 +214,7 @@ extension PortfolioViewController: UITableViewDelegate {
     }
 }
 
+// MARK: - WebSocketManagerDelegate
 extension PortfolioViewController: WebSocketManagerDelegate {
     func didReceivePriceUpdate(symbol: String, price: Double) {
         guard let index = portfolioCoins.firstIndex(where: { "\($0.symbol?.lowercased() ?? "")usdt" == symbol.lowercased() }) else { return }
@@ -249,12 +264,13 @@ extension PortfolioViewController: WebSocketManagerDelegate {
     }
 }
 
+// MARK: - UISearchResultsUpdating
 extension PortfolioViewController: UISearchResultsUpdating {
     func updateSearchResults(for searchController: UISearchController) {
         let searchText = searchController.searchBar.text?.lowercased() ?? ""
         
         filteredCoins = portfolioCoins.filter { coin in
-            (coin.name?.lowercased().contains(searchText) ?? false) ||
+            (coin.rawName?.lowercased().contains(searchText) ?? false) ||
             (coin.symbol?.lowercased().contains(searchText) ?? false)
         }
         

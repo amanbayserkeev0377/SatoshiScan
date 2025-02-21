@@ -22,15 +22,15 @@ class SortManager {
     static func sortCoins<T: SortableCrypto>(_ coins: inout [T], by option: SortOption) {
         switch option {
         case .nameAscending:
-            if let portfolioCoins = coins as? [PortfolioCoin] {
-                portfolioCoins.sort { $0.nameValue < $1.nameValue }
+            if var portfolioCoins = coins as? [PortfolioCoin] {
+                portfolioCoins.sort { $0.name < $1.name }
                 coins = portfolioCoins as! [T]
             } else {
                 coins.sort { $0.name < $1.name }
             }
         case .nameDescending:
-            if let portfolioCoins = coins as? [PortfolioCoin] {
-                portfolioCoins.sort { $0.nameValue > $1.nameValue }
+            if var portfolioCoins = coins as? [PortfolioCoin] {
+                portfolioCoins.sort { $0.name > $1.name }
                 coins = portfolioCoins as! [T]
             } else {
                 coins.sort { $0.name > $1.name }
@@ -58,18 +58,15 @@ class SortManager {
 }
 
 protocol SortableCrypto {
+    
     var name: String { get }
     var currentPrice: Double { get }
     var priceChange: Double? { get }
 }
+
 
 extension Crypto: SortableCrypto {
     var currentPrice: Double { return current_price }
     var priceChange: Double? { return price_change_percentage_24h }
 }
 
-extension PortfolioCoin {
-    var portfolioCurrentPrice: Double {
-        return self.currentPrice
-    }
-}

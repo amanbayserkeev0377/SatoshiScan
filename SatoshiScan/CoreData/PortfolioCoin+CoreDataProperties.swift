@@ -14,7 +14,7 @@ extension PortfolioCoin {
     }
     
     @NSManaged public var id: String?
-    @NSManaged public var name: String?
+    @NSManaged public var rawName: String?
     @NSManaged public var symbol: String?
     @NSManaged public var currentPrice: Double
     @NSManaged public var imageURL: String?
@@ -23,16 +23,15 @@ extension PortfolioCoin {
 
 extension PortfolioCoin: Identifiable { }
 
+// MARK: - Conformance to SortableCrypto
 extension PortfolioCoin: SortableCrypto {
-    var currentPrice: Double {
-        return self.currentPrice
+    
+    public var name: String {
+        get { rawName ?? "Unknown" }
+        set { rawName = newValue }
     }
     
-    var priceChange: Double? {
+    public var priceChange: Double? {
         return nil
-    }
-    
-    var nameValue: String {
-        return self.name ?? "Unknown"
     }
 }
