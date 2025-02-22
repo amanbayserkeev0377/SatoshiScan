@@ -122,10 +122,11 @@ class CoreDataManager {
         }
     }
     
-    func addPriceAlert(symbol: String, targetPrice: Double) {
+    func addPriceAlert(symbol: String, targetPrice: Double, imageURL: String) {
         let priceAlert = PriceAlert(context: context)
         priceAlert.symbol = symbol
         priceAlert.targetPrice = targetPrice
+        priceAlert.imageURL = imageURL
         saveContext()
     }
     
@@ -139,7 +140,13 @@ class CoreDataManager {
         }
     }
     
-    func removePriceAlert(alert: PriceAlert) {
+func removePriceAlert(alert: PriceAlert) {
+        context.delete(alert)
+        saveContext()
+    }
+    
+    func deletePriceAlert(_ alert: PriceAlert) {
+        let context = persistentContainer.viewContext
         context.delete(alert)
         saveContext()
     }
