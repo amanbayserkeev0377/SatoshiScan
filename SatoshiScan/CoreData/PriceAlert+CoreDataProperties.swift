@@ -9,6 +9,10 @@
 import Foundation
 import CoreData
 
+public enum AlertType: String {
+    case above = "above"
+    case below = "below"
+}
 
 extension PriceAlert {
 
@@ -20,6 +24,7 @@ extension PriceAlert {
     @NSManaged public var isEnabled: Bool
     @NSManaged public var symbol: String?
     @NSManaged public var targetPrice: Double
+    @NSManaged public var alertType: String?
 
 }
 

@@ -104,15 +104,14 @@ class WebSocketManager {
     }
     
     private func sendPriceAlert(title: String, body: String) {
-        print("🚀 Sending notification: \(title) - \(body)")
+        print("Sending notification: \(title) - \(body)")
         
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
         content.sound = .default
         
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
         
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
@@ -143,10 +142,17 @@ class WebSocketManager {
         let alerts = CoreDataManager.shared.fetchPriceAlerts()
         
         for alert in alerts {
-            guard let alertSymbol = alert.symbol?.lowercased() else { continue }
-            if alertSymbol == symbol.lowercased() {
-                sendPriceAlert(title: "Price Alert", body: "\(symbol.uppercased()) reached $\(alert.targetPrice)!")
-                CoreDataManager.shared.removePriceAlert(alert: alert)
+            guard let alertSymbol = alert.alertType else { continue }
+            
+            let shouldTrigger = (alertSymbol == "above" && newPrice >= alert.targetPrice) ||
+                                (alertSymbol == "below" && newPrice <= alert.targetPrice)
+            
+            if alert.isEnabled && shouldTrigger {
+                       sendPriceAlert(title: "Price Alert",
+                                      body: "\(symbol.uppercased()) \(alert.alertType == "above" ? "exceeded" : "dropped below") $\(String(format: "%.2f", alert.targetPrice))!")
+                
+                alert.isEnabled = false
+                CoreDataManager.shared.saveContext()
             }
         }
         

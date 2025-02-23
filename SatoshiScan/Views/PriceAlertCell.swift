@@ -72,6 +72,8 @@ class PriceAlertCell: UITableViewCell {
         contentView.addSubview(targetLabel)
         contentView.addSubview(alertSwitch)
         
+        contentView.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+        
         NSLayoutConstraint.activate([
             shadowView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             shadowView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
@@ -84,7 +86,7 @@ class PriceAlertCell: UITableViewCell {
             coinImageView.heightAnchor.constraint(equalTo: shadowView.heightAnchor),
             
             titleLabel.leadingAnchor.constraint(equalTo: shadowView.trailingAnchor, constant: 12),
-            titleLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor, constant: -8),
+            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
             titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: alertSwitch.leadingAnchor, constant: -12),
             
             targetLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
@@ -92,7 +94,9 @@ class PriceAlertCell: UITableViewCell {
             targetLabel.trailingAnchor.constraint(lessThanOrEqualTo: alertSwitch.leadingAnchor, constant: -12),
             
             alertSwitch.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            alertSwitch.centerYAnchor.constraint(equalTo: contentView.centerYAnchor)
+            alertSwitch.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            
+            targetLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -10)
         ])
         
         alertSwitch.addTarget(self, action: #selector(switchToggled), for: .valueChanged)

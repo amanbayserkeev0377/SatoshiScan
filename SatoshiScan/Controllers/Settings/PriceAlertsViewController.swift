@@ -12,7 +12,7 @@ class PriceAlertsViewController: UIViewController {
     
     private let tableView = UITableView()
     private var alerts: [PriceAlert] = []
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "Price Alerts"
@@ -167,25 +167,35 @@ extension PriceAlertsViewController: SelectCurrencyForAlertDelegate {
             field.keyboardType = .decimalPad
         }
         
+        let aboveAction = UIAlertAction(title: "If price goes above", style: .default) { [weak self] _ in
+            self?.savePriceAlert(symbol: symbol, alertType: .above, alertVC: alertVC)
+        }
+        
+        let belowAction = UIAlertAction(title: "If price goes below", style: .default) { [weak self] _ in
+            self?.savePriceAlert(symbol: symbol, alertType: .below, alertVC: alertVC)
+        }
+        
+        alertVC.addAction(aboveAction)
+        alertVC.addAction(belowAction)
         alertVC.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alertVC.addAction(UIAlertAction(title: "Save", style: .default, handler: { [weak self] _ in
-            guard let self = self else { return }
-            guard let priceText = alertVC.textFields?.first?.text,
-                  let price = Double(priceText) else { return }
-            
-            let imageURL = self.getImageURLForSymbol(symbol) ?? ""
-            
-            CoreDataManager.shared.addPriceAlert(symbol: symbol.uppercased(), targetPrice: price, imageURL: imageURL)
-            
-            DispatchQueue.main.async {
-                self.loadAlerts()
-                self.tableView.reloadData()
-            }
-        }))
         
         present(alertVC, animated: true)
     }
     
+    private func savePriceAlert(symbol: String, alertType: AlertType, alertVC: UIAlertController) {
+        guard let priceText = alertVC.textFields?.first?.text,
+              let price = Double(priceText) else { return }
+        
+        let imageURL = getImageURLForSymbol(symbol) ?? ""
+        
+        CoreDataManager.shared.addPriceAlert(symbol: symbol.uppercased(), targetPrice: price, imageURL: imageURL, alertType: alertType.rawValue)
+        
+        DispatchQueue.main.async {
+            self.loadAlerts()
+            self.tableView.reloadData()
+        }
+    }
+
     private func getImageURLForSymbol(_ symbol: String) -> String? {
         
         guard let tabBarController = self.tabBarController else { return nil }

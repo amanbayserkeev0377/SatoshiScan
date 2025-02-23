@@ -122,11 +122,14 @@ class CoreDataManager {
         }
     }
     
-    func addPriceAlert(symbol: String, targetPrice: Double, imageURL: String) {
-        let priceAlert = PriceAlert(context: context)
-        priceAlert.symbol = symbol
-        priceAlert.targetPrice = targetPrice
-        priceAlert.imageURL = imageURL
+    func addPriceAlert(symbol: String, targetPrice: Double, imageURL: String, alertType: String) {
+        let alert = PriceAlert(context: context)
+        alert.symbol = symbol.uppercased()
+        alert.targetPrice = targetPrice
+        alert.imageURL = imageURL
+        alert.alertType = alertType
+        alert.isEnabled = true
+        
         saveContext()
     }
     

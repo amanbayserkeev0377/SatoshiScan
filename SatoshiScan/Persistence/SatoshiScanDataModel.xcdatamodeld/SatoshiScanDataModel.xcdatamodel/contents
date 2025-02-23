@@ -9,6 +9,7 @@
         <attribute name="symbol" optional="YES" attributeType="String"/>
     </entity>
     <entity name="PriceAlert" representedClassName="PriceAlert" syncable="YES">
+        <attribute name="alertType" optional="YES" attributeType="String"/>
         <attribute name="imageURL" optional="YES" attributeType="String"/>
         <attribute name="isEnabled" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="symbol" optional="YES" attributeType="String"/>
