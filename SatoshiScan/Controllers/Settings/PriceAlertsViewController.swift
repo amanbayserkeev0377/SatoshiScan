@@ -21,11 +21,10 @@ class PriceAlertsViewController: UIViewController {
         setupTableView()
         loadAlerts()
         
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
-            barButtonSystemItem: .add,
-            target: self,
-            action: #selector(addNewAlert)
-        )
+        navigationItem.rightBarButtonItems = [
+            UIBarButtonItem(title: "Sort", style: .plain, target: self, action: #selector(showSortOptions)),
+            UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addNewAlert))
+        ]
     }
     
     private func setupTableView() {
@@ -53,6 +52,23 @@ class PriceAlertsViewController: UIViewController {
         let selectCurrencyVC = SelectCurrencyForAlertViewController()
         selectCurrencyVC.delegate = self
         navigationController?.pushViewController(selectCurrencyVC, animated: true)
+    }
+    
+    @objc private func showSortOptions() {
+        let alert = UIAlertController(title: "Sort Alerts", message: "Choose sorting option", preferredStyle: .actionSheet)
+        
+        alert.addAction(UIAlertAction(title: "By Price (Low to High)", style: .default, handler: { _ in
+            self.alerts.sort { $0.targetPrice < $1.targetPrice }
+            self.tableView.reloadData()
+        }))
+        
+        alert.addAction(UIAlertAction(title: "By Price (High to Low)", style: .default, handler: { _ in
+            self.alerts.sort { $0.targetPrice > $1.targetPrice }
+            self.tableView.reloadData()
+        }))
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        present(alert, animated: true)
     }
 }
 

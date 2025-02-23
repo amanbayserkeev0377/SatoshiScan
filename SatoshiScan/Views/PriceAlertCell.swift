@@ -15,10 +15,21 @@ class PriceAlertCell: UITableViewCell {
     private let coinImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
-        imageView.layer.cornerRadius = 20
+        imageView.layer.cornerRadius = 10
         imageView.clipsToBounds = true
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
+    }()
+    
+    private let shadowView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        view.layer.shadowColor = UIColor.black.cgColor
+        view.layer.shadowOpacity = 0.2
+        view.layer.shadowOffset = CGSize(width: 0, height: 2)
+        view.layer.shadowRadius = 4
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
     }()
     
     private let titleLabel: UILabel = {
@@ -55,22 +66,29 @@ class PriceAlertCell: UITableViewCell {
     }
     
     private func setupUI() {
-        [coinImageView, titleLabel, targetLabel, alertSwitch].forEach {
-            contentView.addSubview($0)
-        }
+        contentView.addSubview(shadowView)
+        shadowView.addSubview(coinImageView)
+        contentView.addSubview(titleLabel)
+        contentView.addSubview(targetLabel)
+        contentView.addSubview(alertSwitch)
         
         NSLayoutConstraint.activate([
-            coinImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            coinImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            coinImageView.widthAnchor.constraint(equalToConstant: 44),
-            coinImageView.heightAnchor.constraint(equalToConstant: 44),
+            shadowView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            shadowView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            shadowView.widthAnchor.constraint(equalToConstant: 40),
+            shadowView.heightAnchor.constraint(equalToConstant: 40),
             
-            titleLabel.leadingAnchor.constraint(equalTo: coinImageView.trailingAnchor, constant: 12),
-            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
+            coinImageView.centerXAnchor.constraint(equalTo: shadowView.centerXAnchor),
+            coinImageView.centerYAnchor.constraint(equalTo: shadowView.centerYAnchor),
+            coinImageView.widthAnchor.constraint(equalTo: shadowView.widthAnchor),
+            coinImageView.heightAnchor.constraint(equalTo: shadowView.heightAnchor),
+            
+            titleLabel.leadingAnchor.constraint(equalTo: shadowView.trailingAnchor, constant: 12),
+            titleLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor, constant: -8),
             titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: alertSwitch.leadingAnchor, constant: -12),
             
             targetLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            targetLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            targetLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 2),
             targetLabel.trailingAnchor.constraint(lessThanOrEqualTo: alertSwitch.leadingAnchor, constant: -12),
             
             alertSwitch.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
