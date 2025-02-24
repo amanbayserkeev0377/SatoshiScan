@@ -18,11 +18,11 @@ SatoshiScan is a **pet project iOS application** for tracking cryptocurrency pri
 
 | Market | Watchlist | Portfolio |
 |--------|----------|-----------|
-| ![Market](market.png) | ![Watchlist](watchlist.png) | ![Portfolio](portfolio.png) |
+| ![Market](market.PNG) | ![Watchlist](watchlist.PNG) | ![Portfolio](portfolio.PNG) |
 
 | Crypto Detail | Price Alerts | Settings |
 |--------------|-------------|----------|
-| ![Crypto Detail](crypto_detail.png) | ![Price Alerts](price_alerts.png) | ![Settings](settings.png) |
+| ![Crypto Detail](crypto_detail.PNG) | ![Price Alerts](price_alerts.PNG) | ![Settings](settings.PNG) |
 
 
 ---
