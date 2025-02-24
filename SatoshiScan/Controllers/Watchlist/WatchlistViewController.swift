@@ -58,14 +58,34 @@ class WatchlistViewController: UIViewController {
     
     
     private func fetchWatchlist() {
-        watchlistCoins = CoreDataManager.shared.fetchWatchlist()
+        let newWatchlist = CoreDataManager.shared.fetchWatchlist()
         
-        // LOG
-        for coin in watchlistCoins {
-            print("Fetched \(coin.symbol ?? "") - Change: \(coin.priceChangePercentage24h)")
+        if watchlistCoins.isEmpty {
+            watchlistCoins = newWatchlist
+            tableView.reloadData()
+        } else {
+            let oldSymbols = Set(watchlistCoins.compactMap { $0.symbol })
+            let newSymbols = Set(newWatchlist.compactMap { $0.symbol })
+            
+            let addedSymbols = newSymbols.subtracting(oldSymbols)
+            let removedSymbols = oldSymbols.subtracting(newSymbols)
+            
+            let addedIndexes = addedSymbols.compactMap { symbol in
+                newWatchlist.firstIndex { $0.symbol == symbol }
+            }.map { IndexPath(row: $0, section: 0) }
+            
+            let removedIndexes = removedSymbols.compactMap { symbol in
+                watchlistCoins.firstIndex { $0.symbol == symbol }
+            }.map { IndexPath(row: $0, section: 0) }
+            
+            watchlistCoins = newWatchlist
+            
+            tableView.performBatchUpdates({
+                tableView.insertRows(at: addedIndexes, with: .fade)
+                tableView.deleteRows(at: removedIndexes, with: .fade)
+            }, completion: nil)
         }
         
-        tableView.reloadData()
         updateEmptyState()
     }
     
@@ -210,21 +230,21 @@ extension WatchlistViewController: WebSocketManagerDelegate {
         }
         
         let changePercentage = ((price - watchlistCoins[index].previousDayPrice) / watchlistCoins[index].previousDayPrice) * 100
-        
         let roundedChange = round(changePercentage * 100) / 100
+        
         watchlistCoins[index].priceChangePercentage24h = abs(roundedChange) < 0.01 ? 0.01 : roundedChange
-
-        watchlistCoins[index].setValue(changePercentage, forKey: "priceChangePercentage24h")
+        watchlistCoins[index].currentPrice = price
+        
         CoreDataManager.shared.saveContext()
         
         DispatchQueue.main.async {
             let indexPath = IndexPath(row: index, section: 0)
             
             if let cell = self.tableView.cellForRow(at: indexPath) as? CryptoCell {
-                cell.updatePrice(newPrice: price, changePercentage: changePercentage)
+                cell.updatePrice(newPrice: price, changePercentage: self.watchlistCoins[index].priceChangePercentage24h)
+            } else {
+                self.tableView.reloadRows(at: [indexPath], with: .none)
             }
-            
-            self.tableView.reloadRows(at: [indexPath], with: .none)
         }
     }
 }

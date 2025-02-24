@@ -226,8 +226,37 @@ class CryptoDetailViewController: UIViewController {
     }
     
     @objc private func addToPortfolioTapped() {
-        CoreDataManager.shared.addToPortfolio(coin: coin)
-        let alert = UIAlertController(title: "Success", message: "\(coin.name) added to portfolio!", preferredStyle: .alert)
+        let alert = UIAlertController(title: "Enter Amount", message: "How much \(coin.symbol.uppercased()) do you own?", preferredStyle: .alert)
+        
+        alert.addTextField { textField in
+            textField.keyboardType = .decimalPad
+            textField.placeholder = "Enter amount"
+        }
+        
+        let addAction = UIAlertAction(title: "Add", style: .default) { [weak self] _ in
+            guard let self = self,
+                  let text = alert.textFields?.first?.text?
+                .replacingOccurrences(of: ",", with: "."),
+                  let amount = Double(text), amount > 0 else {
+                self?.showErrorAlert()
+                return
+            }
+            
+            CoreDataManager.shared.addToPortfolio(coin: self.coin, amount: amount)
+            
+            let successAlert = UIAlertController(title: "Added", message: "\(self.coin.symbol.uppercased()) (\(amount)) added to Portfolio!", preferredStyle: .alert)
+            successAlert.addAction(UIAlertAction(title: "OK", style: .default))
+            self.present(successAlert, animated: true)
+        }
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(addAction)
+        
+        present(alert, animated: true)
+    }
+    
+    private func showErrorAlert() {
+        let alert = UIAlertController(title: "Invalid Amount", message: "Please enter a valid number", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
     }

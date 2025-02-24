@@ -93,11 +93,10 @@ class PortfolioViewController: UIViewController {
     }
     
     private func updateTotalValue() {
-        let totalValue = portfolioCoins.reduce(into: 0.0) {
-            $0 += $1.currentPrice * $1.amount
-        }
+        let totalValue = portfolioCoins.reduce(0.0) { $0 + ($1.currentPrice * $1.amount) }
         totalValueLabel.text = "Total Portfolio Value: $\(String(format: "%.2f", totalValue))"
     }
+
     
     private func setupSearchController() {
         navigationItem.searchController = searchController

@@ -35,12 +35,13 @@ class CoreDataManager {
         }
     }
     
-    func addToPortfolio(coin: Crypto) {
+    func addToPortfolio(coin: Crypto, amount: Double) {
         let portfolioCoin = PortfolioCoin(context: context)
         portfolioCoin.id = coin.id
         portfolioCoin.name = coin.name
         portfolioCoin.symbol = coin.symbol
         portfolioCoin.currentPrice = coin.current_price
+        portfolioCoin.amount = amount
         portfolioCoin.imageURL = coin.image
         saveContext()
     }
